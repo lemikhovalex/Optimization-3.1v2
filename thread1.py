@@ -11,6 +11,10 @@ data1 = ''
 data2 = ''
 testcounter=0
 conv = 0
+epsilon_conv=10**-4
+
+
+
 
 def reading_dataset(file_name, n, d):
     out = [0] * n
@@ -28,12 +32,26 @@ def reading_dataset(file_name, n, d):
             del tokens[0]
     return out
 
-def is_conv():
-    global testcounter
-    testcounter = testcounter + 1
-    if testcounter==100:
-        return 1
-    return 0
+
+
+
+
+
+def local_norm(x):
+    out=0
+    for i in range(0,len(x) ):
+        out+=x[i]**2
+    return math.sqrt(out)
+    
+def is_conv(x_curr, x_prev):
+    if local_norm(x_curr-x_prev) < epsilon_conv:
+        return True
+    else:
+        return False
+    
+    
+    
+    
 class Slave(Thread):
 
     def __init__(self, name, xm):
