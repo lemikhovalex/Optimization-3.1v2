@@ -7,6 +7,7 @@ def reading_dataset(file_name, n, d):
         s=f.readline()
         tokens=s.split(' ')
         out[i][0]=tokens[0]
+        out[i][0]=-3+2*out[i][0]
         del tokens[0]
         while len(tokens)>1:
             print(tokens)
