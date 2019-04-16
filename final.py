@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 import random
 import time
-import scipy
+import numpy as np
+import scipy.optimize as opt
 import math
 from threading import Thread
 from threading import Lock
-
+n = 7
+d = 6
 data_upd1 = 0
 data_upd2 = 0
 lock1 = Lock()  # общение с мастером
@@ -17,86 +19,76 @@ global glxm
 testcounter = 0
 conv = 0
 epsilon_conv = 10 ** -4
-L = 21930585,25
+L = 21930585.25
 p = 7
-lambda_1=1000
-cores=7 #для вычислений, один на главный
+lambda_1 = 1000
+cores = 7 #для вычислений, один на главный
 
-def add_lists(x, y):
-    out=[0]* (len(x))
-    for i in range(len(x)):
-        out[i]=x[i]+y[i]
-    return out
 
 def scal_mul(x, z):
     global d
-    out=0
+    out = 0
     for i in range(d):
-        out+=x[i+1]*z[i+1]
+        out += x[i+1]*z[i+1]
     return out
 
 
 def l_j(x, z_j):
     #l_j  where i depends on argument
     global n
-    return  (1/n)*math.log(1 + math.exp(-z_j[0] * scal_mul(x, z_j)))
+    return (1/n)*math.log(1 + math.exp(-z_j[0] * scal_mul(x, z_j)))
+
 
 def nabla_z_l_j(x, z_j):
     global d
-    out=[0]*(d+1)
-    out[0]=0
+    out = np.zeros((d+1, 1))
+    out[0][0] = 0
     for i in range(1, d+1):
-        out[i]=(1/n)/(1 + 1 + math.exp(-z_j[0] * scal_mul(x, z_j)))*z_j[i]*z_j[0]
+        out[i] = (1/n)/(1 + math.exp(-z_j[0][0] * scal_mul(x, z_j))) * math.exp(-z_j[0][0] * scal_mul(x, z_j))*(-z_j[i][0]*z_j[0][0])
     return out
 
 
-
-def reading_dataset(file_name, n, d):
-    out = [0] * n
-    for i in range(n):
-        out[i] = [0] * (d+1)
+def reading_dataset(file_name):
+    global n
+    global d
+    out = np.zeros((n, d+1))
     f = open(file_name, 'r')
     for i in range(n):
-        s=f.readline()
-        tokens=s.split(' ')
-        out[i][0]=tokens[0]
-        out[i][0]=-3+2*out[i][0]
+        s = f.readline()
+        tokens = s.split(' ')
+        out[i][0] = int(tokens[0])
+        out[i][0] = - 3 + 2 * out[i][0]
         del tokens[0]
-        while len(tokens)>1:
-            print(tokens)
-            num_and_val=tokens[0].split(':')
-            out[i][ int(num_and_val[0]) ]= num_and_val[1]
+        while len(tokens) > 0:
+            num_and_val = tokens[0].split(':')
+            out[i][int(num_and_val[0])] = float(num_and_val[1])
             del tokens[0]
     return out
 
 
-
 def local_norm_2(x):
-    out=0
-    for i in range(1,len(x) ):
-        out+=x[i]**2
+    global d
+    out = 0
+    for i in range(1, d+1):
+        out += x[i][0]**2
     return math.sqrt(out)
 
 
-def dist_2(x1, x2):
-    global d
-    temp=[0]*(d+1)
-    for i in range(1, d+1):
-        temp[i]=x1[i]-x2[i]
-    return local_norm_2(temp)
-
 def local_norm_1(x):
-    out=0
-    for i in range(1,len(x) ):
-        out+=math.fabs(x[i])
+    global d
+    out = 0
+    for i in range(1, d+1):
+        out += math.fabs(x[i][0])
     return out
+
 
 def gamma():
     global L
     return 1/L
 
+
 def is_conv(x_curr, x_prev):
-    if dist_2(x_curr - x_prev) < epsilon_conv:
+    if local_norm_2(x_curr - x_prev) < epsilon_conv:
         return True
     else:
         return False
@@ -104,18 +96,18 @@ def is_conv(x_curr, x_prev):
 
 def r(x):
     global n
-    out=0
-    for i in range(1, len(x) ):
-        out+=x[i]**2
-    out*= 1/(2*n)
+    out = 0
     for i in range(1, len(x)):
-        out+=math.fabs(x[i])*lambda_1
+        out += x[i]**2
+    out *= 1/(2*n)
+    for i in range(1, len(x)):
+        out += math.fabs(x[i])*lambda_1
     return out
 
 
 def f_for_prox_gr(z, x):
-    out=0
-    out+= 1/(2*gamma())*local_norm_2(x)**2
+    out = 0
+    out += 1/(2*gamma())*local_norm_2(x)**2
     out += r(z)
     return out
 
@@ -123,11 +115,16 @@ def f_for_prox_gr(z, x):
 def n_i(slave_num):
     global n
     global cores
-    n_i=int(n/cores)
-    if(slave_num==cores):
-        return (n - n_i*(cores-1) )
+    out=0
+    if (n%cores == 0):
+        out = int(n/cores)
     else:
-        return n_i
+        if(slave_num == cores):
+            out = n - int(n/cores) * (cores - 1)
+        else:
+            out = int(n/cores)
+    return out
+
 
 def pi(slave_num):
     global n
@@ -135,7 +132,8 @@ def pi(slave_num):
 
 
 def prox(x):
-    res=scipy.optimize.minimize(
+    global d
+    res = opt.minimize(
                             f_for_prox_gr,
                             x,
                             args=x,
@@ -149,32 +147,36 @@ def prox(x):
                             callback=None,
                             options=None
                             )
-    return res.x
+    out = np.zeros((d+1, 1))
+    for i in range(0, d+1):
+        out[i] = res.x[i]
+    return out
 
 
 def sub_in_xplus(slave_num, x):
     #xplus = z - sub_in_xplus(slave_num, z)
     global A
     global d
-    out=[0]*(d+1)
-    z_j=[0]*(d+1)
+    out = np.zeros((d+1, 1))
+    z_j = np.zeros((d+1, 1))
     for j in range(n_i(slave_num)):
         for i in range(1, d+1):
-            z_j[i]=A[j][i]
-        out+=nabla_z_l_j(x, z_j)
-    out*=gamma()
-    out/=n_i(slave_num)
+            z_j[i] = A[j][i]
+        out += nabla_z_l_j(x, z_j)
+    out *= gamma()
+    out /= n_i(slave_num)
     return out
 
 
 class Slave(Thread):
     global A
-    def __init__(self, name,num):
+    global d
+    def __init__(self, name, num):
         Thread.__init__(self)
         self.name = name
-        self.xm = A[0]
-        self.x = A[0]
-        self.num=num
+        self.xm = np.zeros((d+1, 1))
+        self.x = np.zeros((d+1, 1))
+        self.num = num
 
     def run(self):
         global data_upd1
@@ -187,11 +189,12 @@ class Slave(Thread):
         global p
         global gldelta
         global glxm
-        delta = 0.0
+        global d
+        delta = np.zeros((d+1, 1))
         for i in range(p):
-            z = prox(self.xm+delta)
+            z = prox(self.xm + delta)
             xplus = z - sub_in_xplus(self.num, self.xm)
-            delta += pi(self.num)* (xplus-self.x)
+            delta += (xplus-self.x) * pi(self.num)
             self.x = xplus
         while 1:
             check = 0
@@ -210,7 +213,7 @@ class Slave(Thread):
             while 1:
                 lock2.acquire()
                 if data_upd2 == 1 and self.name == data2:
-                    print(data2, self.name)
+                    #print(data2, self.name)
                     self.xm = glxm
                     data_upd2 = 0
                     check = 0
@@ -233,11 +236,14 @@ def master():
     global A
     global glxm
     global gldelta
-    x1 = x2 = A[0]
-    delta = 0.0
+    global d
+    global cores
+    x2 = np.zeros((d+1, 1))
+    x1 = np.zeros((d+1, 1))
+    delta = np.zeros((d+1, 1))
     k = 0
     tmp = ''
-    for i in range(8):
+    for i in range(cores):
         name = "Slave #%s" % (i + 1)
         my_threads.append(Slave(name, i+1))
         my_threads[i].start()
@@ -265,16 +271,16 @@ def master():
             if check == 0:
                 break
         k = k + 1
-        if k%8==0:
-            if is_conv(x1,x2) == 1:
+        if k % 8 == 0:
+            if is_conv(x1, x2) == 1:
                 conv = 1
-                print(x1)
+                #print(x1)
                 break
-            x1=x2
-    for i in range(8):
+            x1 = x2
+    for i in range(cores):
         my_threads[i].join()
 
 
 if __name__ == "__main__":
-    A = reading_dataset("/home/lemikhovalex/Documents/6th term/opt/covtype.libsvm.binary.scale", 581012, 54)
+    A = reading_dataset("/home/lemikhovalex/Documents/6th term/opt/test.scale")
     master()
