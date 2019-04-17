@@ -18,11 +18,11 @@ gldelta = 0.0
 global glxm
 testcounter = 0
 conv = 0
-epsilon_conv = 10 ** -4
+epsilon_conv = 10 ** -9
 L = 21930585.25
 p = 7
 lambda_1 = 1000
-cores = 7 #для вычислений, один на главный
+cores = 1 #для вычислений, один на главный
 
 
 def scal_mul(x, z):
@@ -44,7 +44,9 @@ def nabla_z_l_j(x, z_j):
     out = np.zeros((d+1, 1))
     out[0][0] = 0
     for i in range(1, d+1):
-        out[i] = (1/n)/(1 + math.exp(-z_j[0][0] * scal_mul(x, z_j))) * math.exp(-z_j[0][0] * scal_mul(x, z_j))*(-z_j[i][0]*z_j[0][0])
+        out[i] = (1/n)/(1 + math.exp(-z_j[0][0] * scal_mul(x, z_j))) * \
+                 math.exp(-z_j[0][0] * scal_mul(x, z_j))*\
+                 (-z_j[i]*z_j[0])
     return out
 
 
@@ -115,7 +117,6 @@ def f_for_prox_gr(z, x):
 def n_i(slave_num):
     global n
     global cores
-    out=0
     if (n%cores == 0):
         out = int(n/cores)
     else:
@@ -150,6 +151,8 @@ def prox(x):
     out = np.zeros((d+1, 1))
     for i in range(0, d+1):
         out[i] = res.x[i]
+    out[0] = x[0]
+
     return out
 
 
@@ -160,11 +163,12 @@ def sub_in_xplus(slave_num, x):
     out = np.zeros((d+1, 1))
     z_j = np.zeros((d+1, 1))
     for j in range(n_i(slave_num)):
-        for i in range(1, d+1):
+        for i in range(d+1):
             z_j[i] = A[j][i]
         out += nabla_z_l_j(x, z_j)
     out *= gamma()
     out /= n_i(slave_num)
+    #print(out)
     return out
 
 
@@ -213,7 +217,6 @@ class Slave(Thread):
             while 1:
                 lock2.acquire()
                 if data_upd2 == 1 and self.name == data2:
-                    #print(data2, self.name)
                     self.xm = glxm
                     data_upd2 = 0
                     check = 0
@@ -272,8 +275,11 @@ def master():
                 break
         k = k + 1
         if k % 8 == 0:
+            print(local_norm_2(x1-x2))
             if is_conv(x1, x2) == 1:
                 conv = 1
+                print(x2)
+                print(k)
                 #print(x1)
                 break
             x1 = x2
