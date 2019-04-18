@@ -60,7 +60,6 @@ def reading_dataset(file_name):
     for i in range(n):
         s = f.readline()
         tokens = s.split(' ')
-        print(tokens[0])
         out[i][0] = int(tokens[0])
         out[i][0] = - 3 + 2 * out[i][0]
         del tokens[0]
@@ -142,7 +141,6 @@ def pi(slave_num):
 
 def prox(x):
     global d
-    #print(x)
     res = opt.minimize(
                             f_for_prox_gr,
                             x,
@@ -158,6 +156,7 @@ def prox(x):
                             options=None
                             )
     out = np.zeros((d+1, 1))
+    print("proxxx", local_norm_2(x-res.x))
     for i in range(0, d+1):
         out[i] = res.x[i]
     out[0] = x[0]
@@ -178,7 +177,6 @@ def sub_in_xplus(slave_num, x):
         out += nabla_z_l_j(x, z_j)
     out *= gamma()
     out /= n_i(slave_num)
-    #print(out)
     return out
 
 
@@ -208,7 +206,6 @@ class Slave(Thread):
         delta = np.zeros((d+1, 1))
         for i in range(p):
             z = prox(self.xm + delta)
-            print(self.xm + delta, z)
             subs = sub_in_xplus(self.num, self.xm)
             xplus = z - subs
             delta += (xplus-self.x) * pi(self.num)
