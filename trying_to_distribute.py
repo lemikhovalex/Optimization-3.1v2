@@ -6,8 +6,8 @@ import scipy.optimize as opt
 import math
 from threading import Thread
 from threading import Lock
-n = 7
-d = 6
+n = 581012
+d = 54
 data_upd1 = 0
 data_upd2 = 0
 lock1 = Lock()  # общение с мастером
@@ -21,7 +21,7 @@ conv = 0
 epsilon_conv = 10 ** -9
 L = 21930585.25
 p = 7
-lambda_1 = 1000
+lambda_1 = 10 ** -6
 cores = 1 #для вычислений, один на главный
 
 
