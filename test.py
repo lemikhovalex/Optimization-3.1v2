@@ -21,7 +21,7 @@ conv = 0
 epsilon_conv = 10 ** -5
 L = 21930585.25
 p = 7
-lambda_1 =10 ** -6
+lambda_1 = 10 ** -6
 cores = 7 #для вычислений, один на главный
 
 
@@ -29,7 +29,7 @@ def scal_mul(x, z):
     global d
     out = 0
     for i in range(d):
-        out += x[i+1]*z[i+1]
+        out += x[i+1] * z[i+1]
     return out
 
 
@@ -91,6 +91,7 @@ def gamma():
 
 
 def is_conv(x_curr, x_prev):
+    return False
     delta = local_norm_2(x_curr - x_prev)
     if delta < epsilon_conv:
         return True
@@ -157,7 +158,6 @@ def prox(x):
     for i in range(0, d+1):
         out[i] = res.x[i]
     out[0] = x[0]
-
     return out
 
 
@@ -187,7 +187,7 @@ class Slave(Thread):
         self.x = np.ones((d+1, 1))
         for i in range(1, d + 1):
             self.xm[i] = 1.0 / (i + 18)
-            self.x = 1.0 / (i + 18)
+            self.x[i]  = 1.0 / (i + 18)
         self.num = num
 
     def run(self):
@@ -292,7 +292,7 @@ def master():
         k = k + 1
         print(k)
         if k % 20 == 0:
-            print(x1)
+            print(x2)
             if is_conv(x1, x2) == 1:
                 conv = 1
                 break
@@ -303,5 +303,5 @@ def master():
 
 
 if __name__ == "__main__":
-    A = reading_dataset("covtype.libsvm.binary.scale")
+    A = reading_dataset("/home/lemikhovalex/Documents/6th term/opt/covtype.libsvm.binary.scale")
     master()
