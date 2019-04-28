@@ -162,7 +162,7 @@ def sub_in_xplus(slave_num, x):
     global d
     out = np.zeros((d+1, 1))
     z_j = np.zeros((d+1, 1))
-    for j in range(slave_num * n_i(slave_num-1), (slave_num+1) * n_i(slave_num)):
+    for j in range( (slave_num - 1) * n_i(slave_num-1), (slave_num - 1) * n_i(slave_num-1) + n_i(slave_num) ):
         for i in range(d+1):
             z_j[i] = A[j][i]
         out += nabla_z_l_j(x, z_j)
