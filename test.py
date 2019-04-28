@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
 import random
 import time
 import numpy as np
 import scipy.optimize as opt
 import math
 import threading
-n = 581012
+n = 500 #581012
 d = 54
 data_upd1 = 0
 data_upd2 = 0
@@ -19,7 +18,7 @@ testcounter = 0
 conv = 0
 epsilon_conv = 10 ** -9
 L = 21930585.25*10**-8
-p = 7
+p = 1
 lambda_1 =10 ** -6
 cores = 5 #для вычислений, один на главный
 
@@ -191,18 +190,22 @@ def Slave(name, num):
     global glxm
     print(pi(num))
     while 1:
-        print('here')
         delta = np.zeros((d + 1, 1))
         for i in range(p):
             z = prox(xm + delta)
 
             subs = sub_in_xplus(num, z)
+            print(num)
+            print('я смог1')
             xplus = z - subs
+            print(num)
+            print('я смог2')
             delta += (xplus - x) * pi(num)
+            print(num)
+            print('я смог3')
             x = xplus
         check = 0
         while 1:
-            print('there')
             lock1.acquire()
             if data_upd1 == 0:
                 data1 = name
@@ -214,7 +217,6 @@ def Slave(name, num):
             if check == 1 or conv == 1:
                 break
         while 1:
-            print('nowhere')
             lock2.acquire()
             if data_upd2 == 1 and name == data2:
                 xm = glxm
@@ -224,7 +226,6 @@ def Slave(name, num):
             if check == 0 or conv == 1:
                 break
         if conv == 1:
-            print('lol')
             break
 
 
@@ -283,14 +284,13 @@ def master():
                 break
         k = k + 1
         print(k)
-        if k % 5 == 0:
-            if L<21930585.25 :
-                L*=2
-            print(x2)
-            if is_conv(x1, x2) == 1:
-                conv = 1
-                break
-            x1 = x2
+        L*=2
+
+        if is_conv(x1, x2) == 1:
+            conv = 1
+            break
+        x1 = x2
+        print(x1)
     for i in range(cores):
         print('join')
         my_threads[i].join()
