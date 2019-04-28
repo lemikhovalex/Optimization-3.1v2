@@ -4,38 +4,34 @@ import time
 import numpy as np
 import scipy.optimize as opt
 import math
-from threading import Thread
-from threading import Lock
+import threading
 n = 581012
 d = 54
 data_upd1 = 0
 data_upd2 = 0
-lock1 = Lock()  # общение с мастером
-lock2 = Lock()
+lock1 = threading.Lock()  # общение с мастером
+lock2 = threading.Lock()
 data1 = ''
 data2 = ''
-gldelta = 0.0
-global glxm
+gldelta=np.zeros((d+1, 1))
+glxm=np.zeros((d+1, 1))
 testcounter = 0
 conv = 0
-epsilon_conv = 10 ** -5
-L = 21930585.25
+epsilon_conv = 10 ** -9
+L = 21930585.25*10**-8
 p = 7
-lambda_1 = 10 ** -6
-cores = 7 #для вычислений, один на главный
+lambda_1 =10 ** -6
+cores = 5 #для вычислений, один на главный
 
 
 def scal_mul(x, z):
     global d
     out = 0
     for i in range(d):
-        out += x[i+1] * z[i+1]
+        out += x[i+1]*z[i+1]
     return out
 
 
-def l_j(x, z_j):
-    global n
-    return (1/n)*math.log(1 + math.exp(-z_j[0] * scal_mul(x, z_j)))
 
 
 def nabla_z_l_j(x, z_j):
@@ -44,10 +40,9 @@ def nabla_z_l_j(x, z_j):
     out = np.zeros((d+1, 1))
     out[0][0] = 0
     for i in range(1, d+1):
-        out[i] = float((1/n))
-        out[i] /= (1 + math.exp(-z_j[0][0] * scal_mul(x, z_j)))
-        out[i] *=      math.exp(-z_j[0][0] * scal_mul(x, z_j))
-        out[i] *= (-z_j[i] * z_j[0])
+        out[i] = 1.0
+        out[i] /= (1 + math.exp(z_j[0][0] * scal_mul(x, z_j)))
+        out[i] *= (-z_j[i] * z_j[0][0])
     return out
 
 
@@ -91,7 +86,6 @@ def gamma():
 
 
 def is_conv(x_curr, x_prev):
-    return False
     delta = local_norm_2(x_curr - x_prev)
     if delta < epsilon_conv:
         return True
@@ -158,6 +152,7 @@ def prox(x):
     for i in range(0, d+1):
         out[i] = res.x[i]
     out[0] = x[0]
+
     return out
 
 
@@ -176,66 +171,62 @@ def sub_in_xplus(slave_num, x):
     return out
 
 
-class Slave(Thread):
+def Slave(name, num):
     global A
     global d
+    xm = np.ones((d+1, 1))
+    x = np.ones((d+1, 1))
+    for i in range(1, d + 1):
+        xm[i] = 20
+        x[i] = 20
+    global data_upd1
+    global data_upd2
+    global lock1
+    global lock2
+    global data1
+    global data2
+    global conv
+    global p
+    global gldelta
+    global glxm
+    print(pi(num))
+    while 1:
+        print('here')
+        delta = np.zeros((d + 1, 1))
+        for i in range(p):
+            z = prox(xm + delta)
 
-    def __init__(self, name, num):
-        Thread.__init__(self)
-        self.name = name
-        self.xm = np.ones((d+1, 1))
-        self.x = np.ones((d+1, 1))
-        for i in range(1, d + 1):
-            self.xm[i] = 1.0 / (i + 18)
-            self.x[i]  = 1.0 / (i + 18)
-        self.num = num
-
-    def run(self):
-        global data_upd1
-        global data_upd2
-        global lock1
-        global lock2
-        global data1
-        global data2
-        global conv
-        global p
-        global gldelta
-        global glxm
-        global d
-
-
+            subs = sub_in_xplus(num, z)
+            xplus = z - subs
+            delta += (xplus - x) * pi(num)
+            x = xplus
+        check = 0
         while 1:
-            delta = np.zeros((d + 1, 1))
-            for i in range(p):
-                z = prox(self.xm + delta)
-                subs = sub_in_xplus(self.num, self.xm)
-                xplus = z - subs
-                delta += (xplus - self.x) * pi(self.num)
-                self.x = xplus
-            check = 0
-            while 1:
-                lock1.acquire()
-                if data_upd1 == 0:
-                    data1 = self.name
-                    gldelta = delta
-                    data_upd1 = 1
+            print('there')
+            lock1.acquire()
+            if data_upd1 == 0:
+                data1 = name
+                gldelta = delta
+                data_upd1 = 1
+                check = 1
 
-                    check = 1
-
-                lock1.release()
-                if check == 1 or conv == 1:
-                    break
-            while 1:
-                lock2.acquire()
-                if data_upd2 == 1 and self.name == data2:
-                    self.xm = glxm
-                    data_upd2 = 0
-                    check = 0
-                lock2.release()
-                if check == 0 or conv == 1:
-                    break
-            if conv == 1:
+            lock1.release()
+            if check == 1 or conv == 1:
                 break
+        while 1:
+            print('nowhere')
+            lock2.acquire()
+            if data_upd2 == 1 and name == data2:
+                xm = glxm
+                data_upd2 = 0
+                check = 0
+            lock2.release()
+            if check == 0 or conv == 1:
+                break
+        if conv == 1:
+            print('lol')
+            break
+
 
 
 def master():
@@ -252,17 +243,18 @@ def master():
     global gldelta
     global d
     global cores
+    global L
     x2 = np.ones((d+1, 1))
     x1 = np.ones((d+1, 1))
     for i in range(1, d+1):
-        x1[i] = 1.0/(i+18)
-        x2[i] = 1.0/(i+18)
+        x1[i] = 20
+        x2[i] = 20
     delta = np.zeros((d+1, 1))
     k = 0
     tmp = ''
     for i in range(cores):
         name = "Slave #%s" % (i + 1)
-        my_threads.append(Slave(name, i+1))
+        my_threads.append(threading.Thread(target = Slave, args = (name, i+1)))
         my_threads[i].start()
     while 1:
         check = 0
@@ -291,7 +283,9 @@ def master():
                 break
         k = k + 1
         print(k)
-        if k % 20 == 0:
+        if k % 5 == 0:
+            if L<21930585.25 :
+                L*=2
             print(x2)
             if is_conv(x1, x2) == 1:
                 conv = 1
@@ -300,8 +294,9 @@ def master():
     for i in range(cores):
         print('join')
         my_threads[i].join()
+        print('lols')
 
 
 if __name__ == "__main__":
-    A = reading_dataset("/home/lemikhovalex/Documents/6th term/opt/covtype.libsvm.binary.scale")
+    A = reading_dataset("covtype.libsvm.binary.scale")
     master()
