@@ -4,8 +4,10 @@ import numpy as np
 import scipy.optimize as opt
 import math
 import threading
-n = 500 #581012
+n = 581
 d = 54
+n_to_read = 581012
+d_to_read = 54
 data_upd1 = 0
 data_upd2 = 0
 lock1 = threading.Lock()  # общение с мастером
@@ -16,11 +18,15 @@ gldelta=np.zeros((d+1, 1))
 glxm=np.zeros((d+1, 1))
 testcounter = 0
 conv = 0
-epsilon_conv = 10 ** -9
-L = 21930585.25*10**-8
+epsilon_conv = 10 ** -8
+L = 21930585.25 * 10**-1
 p = 1
-lambda_1 =10 ** -6
-cores = 5 #для вычислений, один на главный
+lambda_1 = 10 ** -9 * 10**2
+cores = 1 #для вычислений, один на главный
+x_init = np.zeros((d+1, 1))
+for i in range(d+1):
+    x_init[i][0] = 0.01 * i
+x_init[0][0] = 0
 
 
 def scal_mul(x, z):
@@ -29,8 +35,6 @@ def scal_mul(x, z):
     for i in range(d):
         out += x[i+1]*z[i+1]
     return out
-
-
 
 
 def nabla_z_l_j(x, z_j):
@@ -46,11 +50,11 @@ def nabla_z_l_j(x, z_j):
 
 
 def reading_dataset(file_name):
-    global n
-    global d
-    out = np.zeros((n, d+1))
+    global n_to_read
+    global d_to_read
+    out = np.zeros((n_to_read, d_to_read+1))
     f = open(file_name, 'r')
-    for i in range(n):
+    for i in range(n_to_read):
         s = f.readline()
         tokens = s.split(' ')
         out[i][0] = int(tokens[0])
@@ -60,6 +64,7 @@ def reading_dataset(file_name):
             num_and_val = tokens[0].split(':')
             out[i][int(num_and_val[0])] = float(num_and_val[1])
             del tokens[0]
+    print("I've read")
     return out
 
 
@@ -173,11 +178,9 @@ def sub_in_xplus(slave_num, x):
 def Slave(name, num):
     global A
     global d
-    xm = np.ones((d+1, 1))
-    x = np.ones((d+1, 1))
-    for i in range(1, d + 1):
-        xm[i] = 20
-        x[i] = 20
+    global x_init
+    xm = x_init
+    x = x_init
     global data_upd1
     global data_upd2
     global lock1
@@ -188,21 +191,14 @@ def Slave(name, num):
     global p
     global gldelta
     global glxm
-    print(pi(num))
     while 1:
         delta = np.zeros((d + 1, 1))
         for i in range(p):
             z = prox(xm + delta)
 
             subs = sub_in_xplus(num, z)
-            print(num)
-            print('я смог1')
             xplus = z - subs
-            print(num)
-            print('я смог2')
             delta += (xplus - x) * pi(num)
-            print(num)
-            print('я смог3')
             x = xplus
         check = 0
         while 1:
@@ -212,7 +208,6 @@ def Slave(name, num):
                 gldelta = delta
                 data_upd1 = 1
                 check = 1
-
             lock1.release()
             if check == 1 or conv == 1:
                 break
@@ -245,17 +240,15 @@ def master():
     global d
     global cores
     global L
-    x2 = np.ones((d+1, 1))
-    x1 = np.ones((d+1, 1))
-    for i in range(1, d+1):
-        x1[i] = 20
-        x2[i] = 20
+    global x_init
+    x2 = x_init
+    x1 = x_init
     delta = np.zeros((d+1, 1))
     k = 0
     tmp = ''
     for i in range(cores):
         name = "Slave #%s" % (i + 1)
-        my_threads.append(threading.Thread(target = Slave, args = (name, i+1)))
+        my_threads.append(threading.Thread(target=Slave, args=(name, i+1)))
         my_threads[i].start()
     while 1:
         check = 0
@@ -284,13 +277,13 @@ def master():
                 break
         k = k + 1
         print(k)
-        L*=2
 
         if is_conv(x1, x2) == 1:
             conv = 1
             break
+        #print(x2)
+        print(local_norm_1(x2 - x1) - 2.892195 * 10**-7)
         x1 = x2
-        print(x1)
     for i in range(cores):
         print('join')
         my_threads[i].join()
