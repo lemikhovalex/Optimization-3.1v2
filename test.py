@@ -19,13 +19,13 @@ glxm=np.zeros((d+1, 1))
 testcounter = 0
 conv = 0
 epsilon_conv = 10 ** -8
-L = 21930585.25 * 10**-1
+L = 21930585.25 * 10**-3
 p = 1
-lambda_1 = 10 ** -9 * 10**2
-cores = 1 #для вычислений, один на главный
+lambda_1 = 10 ** -9 * 10**-2
+cores = 5 #для вычислений, один на главный
 x_init = np.zeros((d+1, 1))
 for i in range(d+1):
-    x_init[i][0] = 0.01 * i
+    x_init[i][0] = -10**-10
 x_init[0][0] = 0
 
 
@@ -111,7 +111,7 @@ def r(x):
 
 def f_for_prox_gr(z, x):
     out = 0
-    out += 1/(2*gamma())*local_norm_2(x)**2
+    out += 1/(2*gamma())*local_norm_2(z - x)**2
     out += r(z)
     return out
 
@@ -277,12 +277,14 @@ def master():
                 break
         k = k + 1
         print(k)
-
+        if (k%50 == 0):
+            print(local_norm_1(delta))
+            print(x2)
         if is_conv(x1, x2) == 1:
             conv = 1
+            print(x2)
             break
-        #print(x2)
-        print(local_norm_1(x2 - x1) - 2.892195 * 10**-7)
+        print(local_norm_1(x2))
         x1 = x2
     for i in range(cores):
         print('join')
