@@ -1,9 +1,9 @@
-import random
 import time
 import numpy as np
 import scipy.optimize as opt
 import math
 import threading
+start_time = time.time()
 n = 581
 d = 54
 n_to_read = 581012
@@ -18,15 +18,43 @@ gldelta=np.zeros((d+1, 1))
 glxm=np.zeros((d+1, 1))
 testcounter = 0
 conv = 0
-epsilon_conv = 10 ** -8
-L = 21930585.25 * 10**-3
-p = 1
+epsilon_conv = 10 ** -3
+L = 21930585.25 * 10**-6
+p = 2
 lambda_1 = 10 ** -9 * 10**-2
 cores = 5 #для вычислений, один на главный
 x_init = np.zeros((d+1, 1))
 for i in range(d+1):
-    x_init[i][0] = -10**-10
+    x_init[i][0] = 0
 x_init[0][0] = 0
+
+sub_opt_arr = []
+time_arr = []
+
+
+def write_star(x):
+    f = open('x_star.covtype.scale', 'w')
+    for i in range(1, d + 1):
+        string_to_write = str(x[i])
+        f.write(string_to_write)
+        f.write("\n")
+    f.close()
+
+
+def read_star():
+    f = open('x_star.covtype.scale', 'r')
+    out = np.empty((d+1, 1))
+    for i in range(1, d + 1):
+        s = f.readline()
+        s = s[:-2]
+        s = s[1:]
+        out[i][0] = float(s)
+    out[0][0] = 0
+    f.close()
+    return out
+
+
+x_star = read_star()
 
 
 def scal_mul(x, z):
@@ -64,7 +92,6 @@ def reading_dataset(file_name):
             num_and_val = tokens[0].split(':')
             out[i][int(num_and_val[0])] = float(num_and_val[1])
             del tokens[0]
-    print("I've read")
     return out
 
 
@@ -90,7 +117,8 @@ def gamma():
 
 
 def is_conv(x_curr, x_prev):
-    delta = local_norm_2(x_curr - x_prev)
+    global x_star
+    delta = local_norm_2(x_curr - x_star)
     if delta < epsilon_conv:
         return True
     else:
@@ -241,6 +269,7 @@ def master():
     global cores
     global L
     global x_init
+    global start_time
     x2 = x_init
     x1 = x_init
     delta = np.zeros((d+1, 1))
@@ -250,6 +279,13 @@ def master():
         name = "Slave #%s" % (i + 1)
         my_threads.append(threading.Thread(target=Slave, args=(name, i+1)))
         my_threads[i].start()
+
+    g = open('t_arr.covtype.scale', 'w')
+    h = open('subopt_arr.covtype.scale', 'w')
+    g.truncate()
+    h.truncate()
+
+    start_time = time.time()
     while 1:
         check = 0
         while 1:
@@ -276,15 +312,25 @@ def master():
             if check == 0:
                 break
         k = k + 1
-        print(k)
-        if (k%50 == 0):
-            print(local_norm_1(delta))
-            print(x2)
+        if (1 != conv):
+            t_to_write = str(time.time() - start_time)
+            g.write(t_to_write)
+            g.write("\n")
+
+            subopt_to_write = str(local_norm_2(x2 - x_star))
+            h.write(subopt_to_write)
+            h.write("\n")
+
         if is_conv(x1, x2) == 1:
+            finish_time = time.time()
+            print("It takes", finish_time-start_time)
             conv = 1
-            print(x2)
+            print("lol")
+            g.close()
+            h.close()
+            print("kek")
             break
-        print(local_norm_1(x2))
+
         x1 = x2
     for i in range(cores):
         print('join')
