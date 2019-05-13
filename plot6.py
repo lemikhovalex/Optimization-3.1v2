@@ -20,9 +20,9 @@ gldelta=np.zeros((d, 1))
 glxm=np.zeros((d, 1))
 testcounter = 0
 conv = 0
-epsilon_conv = 10**-2
+epsilon_conv = 10**-1
 L = 0
-p = 1
+p = 3
 cores = 4 #для вычислений, один на главный
 x_init = np.zeros((d, 1))
 for i in range(d):
@@ -110,8 +110,9 @@ def Slave(name, num):
     while 1:
         x0 = xm
         delta = np.zeros((d, 1))
-        tmp = np.zeros((d, 1))
+
         for i in range(p):
+            tmp = np.zeros((d, 1))
             for e in range(st_string(num),fi_string(num)+1):
                 for j in range(d):
                     tmp[e] += B[e][j]*xm[j]
