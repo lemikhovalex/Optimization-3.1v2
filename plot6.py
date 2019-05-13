@@ -5,9 +5,9 @@ import math
 import threading
 import time
 start_time = time.time()
-sleep_time = 0.001
+sleep_time = 0
 n = 581
-d = 20
+d = 100
 n_to_read = 581012
 d_to_read = 100
 data_upd1 = 0
@@ -22,8 +22,8 @@ testcounter = 0
 conv = 0
 epsilon_conv = 10**-1
 L = 0
-p = 3
-cores = 4 #для вычислений, один на главный
+p = 1
+cores = 2 #для вычислений, один на главный
 x_init = np.zeros((d, 1))
 for i in range(d):
     x_init[i][0] = 1
