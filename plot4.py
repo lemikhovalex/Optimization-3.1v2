@@ -22,8 +22,8 @@ testcounter = 0
 conv = 0
 epsilon_conv = 10**-1
 L = 0
-p = 1
-cores = 4 #для вычислений, один на главный
+p = 7
+cores = 2 #для вычислений, один на главный
 x_init = np.zeros((d, 1))
 for i in range(d):
     x_init[i][0] = 1
