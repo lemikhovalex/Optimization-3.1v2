@@ -7,7 +7,7 @@ import time
 start_time = time.time()
 sleep_time = 0
 n = 581
-d = 100
+d = 500
 n_to_read = 581012
 d_to_read = 100
 data_upd1 = 0
@@ -240,10 +240,8 @@ def master():
 
 
 if __name__ == "__main__":
-    A = np.random.sample((d, d))
-    for i in range(d):
-        for e in range(d):
-            A[i][e]=i+e
+    A = np.ones((d, d))
+    A[4][5] = 100
     B = A
     B = A.T@B
     x_star = np.full((d, 1), 2)
