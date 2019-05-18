@@ -4,10 +4,11 @@ import scipy.optimize as opt
 import math
 import threading
 import time
+import random
 start_time = time.time()
 sleep_time = 0
 n = 581
-d = 12
+d = 50
 n_to_read = 581012
 d_to_read = 100
 data_upd1 = 0
@@ -23,7 +24,7 @@ conv = 0
 epsilon_conv = 10**-1
 L = 0
 p = 7
-cores = 2 #для вычислений, один на главный
+cores = 6 #для вычислений, один на главный
 x_init = np.zeros((d, 1))
 for i in range(d):
     x_init[i][0] = 1
@@ -32,7 +33,88 @@ sub_opt_arr = []
 time_arr = []
 
 
+def set_it_back():
+    global start_time
+    global sleep_time
+    global d
+    global data_upd1
+    global data_upd2
+    global lock1
+    global lock2
+    global data1
+    global data2
+    global gldelta
+    global glxm
+    global conv
+    start_time = time.time()
+    sleep_time = 0
+    data_upd1 = 0
+    data_upd2 = 0
+    lock1 = threading.Lock()
+    lock2 = threading.Lock()
+    data1 = 0
+    data2 = 0
+    gldelta = np.zeros((d, 1))
+    glxm = np.zeros((d, 1))
+    conv = 0
+    testcounter = 0
 
+def write_matrix():
+    global d
+    f = open('matrix.txt', 'w')
+    for i in range(d):
+        rand_arr = [random.randint(0, 1000) for i in range(d)]
+        s = 0.0
+        for j in range(d):
+            s += rand_arr[j]
+        for j in range(d):
+            rand_arr[j] /= s
+        rand_arr[i] *= 10
+        to_write = str(rand_arr)[:-1]
+        to_write = to_write[1:]
+        f.write(to_write)
+        f.write("\n")
+    f.close()
+
+
+def read_matrix():
+    global d
+    f = open('matrix.txt', 'r')
+    out = np.empty((d, d))
+    for i in range(0, d):
+        s = f.readline()
+        tokens = s.split(', ')
+        for j in range(d):
+            out[i][j] = float(tokens[j])
+    f.close()
+    return out
+
+
+def write_star():
+    global d
+    f = open('x_star.txt', 'w')
+    rand_arr = [random.randint(0, 1000) for i in range(d)]
+    s = 0.0
+    for j in range(d):
+        s += rand_arr[j]
+    for j in range(d):
+        rand_arr[j] /= s
+    for i in range(d):
+        string_to_write = str(rand_arr[i])
+        f.write(string_to_write)
+        f.write("\n")
+    f.close()
+
+
+def read_star():
+    global d
+    f = open('x_star.txt', 'r')
+    out = np.empty((d, 1))
+    for i in range(d):
+        s = f.readline()
+        out[i][0] = float(s)
+    f.close()
+    return out
 
 
 
@@ -76,16 +158,25 @@ def is_conv(x_curr, x_prev):
         return False
 
 
-
-
-
 def st_string(slave_num):
     return slave_num*int(d/cores)
 
+
 def fi_string(slave_num):
-    if slave_num!=cores:
+    if slave_num != cores-1:
         return (slave_num + 1)*int(d/cores)-1
     return d-1
+
+
+def part_grad(z, slave_num):
+    global ATA
+    global ATb
+    out = np.zeros((d, 1))
+    for e in range(st_string(slave_num), fi_string(slave_num) + 1):
+        for j in range(d):
+            out[e] += ATA[e][j] * z[j]
+        out[e] -= ATb[e]
+    return out
 
 
 
@@ -108,14 +199,14 @@ def Slave(name, num):
     global sleep_time
     xk = x_init
     k = 1.0
+    xk1 = 0
 
     while 1:
         yk = xm
-
         for i in range(p):
-            xk1 = yk - gamma()*part_grad(yk, num)
+            xk1 = yk - gamma() * part_grad(yk, num)
             yk1 = xk1 + k/(k+3)*(xk1-xk)
-        delta= yk1-yk
+        delta = yk1-yk
         k += 1
         xk1 = xk
         check = 0
@@ -200,7 +291,8 @@ def master():
             lock2.release()
             if check == 0:
                 break
-        print(x2)
+        if(k % 100 == 0):
+            print(x2)
         k = k + 1
         if (1 != conv):
             t_to_write = str(time.time() - start_time)
@@ -226,15 +318,21 @@ def master():
         print('join')
         my_threads[i].join()
         print('lols')
+    out = finish_time-start_time
+    set_it_back()
+    return out
 
 
 if __name__ == "__main__":
-    A = np.ones((d, d))
-    A[4][5] = 100
+    write_star()
+    write_matrix()
+    A = read_matrix()
+    x_star = read_star()
+    # print(x_star)
     ATA = A.T@A
     x_star = np.full((d, 1), 2)
     b = A@x_star
-    L = max(abs(np.linalg.eig(np.matrix(B))[0]))
-    print(L)
+    L = max(abs(np.linalg.eig(np.matrix(ATA))[0]))
+    # print(L)
     ATb = A.T@b
     master()
