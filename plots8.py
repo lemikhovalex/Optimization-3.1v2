@@ -180,6 +180,8 @@ def Slave(name, num):
     global gldelta
     global glxm
     global sleep_time
+    global ATb
+    global ATA
 
     while 1:
         x0 = xm
@@ -187,8 +189,8 @@ def Slave(name, num):
             tmp = np.zeros((d, 1))
             for e in range(st_string(num), fi_string(num)+1):
                 for j in range(d):
-                    tmp[e] += B[e][j]*xm[j]
-                tmp[e] -= ATB[e]
+                    tmp[e] += ATA[e][j]*xm[j]
+                tmp[e] -= ATb[e]
             delta = gamma() * tmp
             xm = xm - delta
         delta = xm - x0
@@ -227,87 +229,87 @@ def Slave(name, num):
         if conv == 1:
             break
 
-    def master():
-        my_threads = []
-        global data_upd1
-        global data_upd2
-        global lock1
-        global lock2
-        global data2
-        global data1
-        global conv
-        global A
-        global glxm
-        global gldelta
-        global d
-        global cores
-        global L
-        global x_init
-        global start_time
-        x2 = x_init
-        x1 = x_init
-        delta = np.zeros((d, 1))
-        k = 0
-        for i in range(cores):
-            name = "#%s" % (i + 1)
-            my_threads.append(threading.Thread(target=Slave, args=(name, i)))
-            my_threads[i].start()
-        g = open('t_arr.covtype.scale.txt', 'w')
-        h = open('subopt_arr.covtype.scale.txt', 'w')
-        g.truncate()
-        h.truncate()
+def master():
+    my_threads = []
+    global data_upd1
+    global data_upd2
+    global lock1
+    global lock2
+    global data2
+    global data1
+    global conv
+    global A
+    global glxm
+    global gldelta
+    global d
+    global cores
+    global L
+    global x_init
+    global start_time
+    x2 = x_init
+    x1 = x_init
+    delta = np.zeros((d, 1))
+    k = 0
+    for i in range(cores):
+        name = "#%s" % (i + 1)
+        my_threads.append(threading.Thread(target=Slave, args=(name, i)))
+        my_threads[i].start()
+    g = open('t_arr.covtype.scale.txt', 'w')
+    h = open('subopt_arr.covtype.scale.txt', 'w')
+    g.truncate()
+    h.truncate()
 
-        start_time = time.time()
+    start_time = time.time()
+    while 1:
+        check = 0
         while 1:
-            check = 0
-            while 1:
-                lock1.acquire()
-                if data_upd1 == 1:
-                    delta = gldelta
-                    data_upd1 = 0
-                    check = 1
-                lock1.release()
-                if check == 1:
-                    x2 = x2 + delta
-                    break
-            while 1:
-                lock2.acquire()
-                if data_upd2 == 0:
-                    glxm = x2
-                    data_upd2 = 1
-                    check = 0
-
-                lock2.release()
-                if check == 0:
-                    break
-            k = k + 1
-            if 1 != conv:
-                t_to_write = str(time.time() - start_time)
-                g.write(t_to_write)
-                g.write("\n")
-
-                subopt_to_write = str(local_norm_2(x2 - x_star))
-                h.write(subopt_to_write)
-                h.write("\n")
-            print(x2)
-            if is_conv(x1, x2) == 1:
-                finish_time = time.time()
-                # print("It takes", finish_time-start_time)
-                conv = 1
-                # print("lol")
-                g.close()
-                h.close()
-                # print("kek")
+            lock1.acquire()
+            if data_upd1 == 1:
+                delta = gldelta
+                data_upd1 = 0
+                check = 1
+            lock1.release()
+            if check == 1:
+                x2 = x2 + delta
                 break
+        while 1:
+            lock2.acquire()
+            if data_upd2 == 0:
+                glxm = x2
+                data_upd2 = 1
+                check = 0
 
-            x1 = x2
-        for i in range(cores):
-            # print('join')
-            my_threads[i].join()
-            # print('lols')
-        out = finish_time - start_time
-        set_it_back()
-        return out
+            lock2.release()
+            if check == 0:
+                break
+        k = k + 1
+        if 1 != conv:
+            t_to_write = str(time.time() - start_time)
+            g.write(t_to_write)
+            g.write("\n")
+
+            subopt_to_write = str(local_norm_2(x2 - x_star))
+            h.write(subopt_to_write)
+            h.write("\n")
+        print(x2)
+        if is_conv(x1, x2) == 1:
+            finish_time = time.time()
+            # print("It takes", finish_time-start_time)
+            conv = 1
+            # print("lol")
+            g.close()
+            h.close()
+            # print("kek")
+            break
+
+        x1 = x2
+    for i in range(cores):
+        # print('join')
+        my_threads[i].join()
+        # print('lols')
+    out = finish_time - start_time
+    set_it_back()
+    return out
 
 
 if __name__ == "__main__":
