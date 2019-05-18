@@ -23,8 +23,8 @@ testcounter = 0
 conv = 0
 epsilon_conv = 10**-1
 L = 0
-p = 7
-cores = 6 #для вычислений, один на главный
+p = 1
+cores = 1  # для вычислений, один на главный
 x_init = np.zeros((d, 1))
 for i in range(d):
     x_init[i][0] = 1
@@ -59,6 +59,7 @@ def set_it_back():
     conv = 0
     testcounter = 0
 
+
 def write_matrix():
     global d
     f = open('matrix.txt', 'w')
@@ -69,7 +70,7 @@ def write_matrix():
             s += rand_arr[j]
         for j in range(d):
             rand_arr[j] /= s
-        rand_arr[i] *= 10
+        rand_arr[i] *= 100
         to_write = str(rand_arr)[:-1]
         to_write = to_write[1:]
         f.write(to_write)
@@ -117,13 +118,11 @@ def read_star():
     return out
 
 
-
 def scal_mul(x, z):
     global d
     out = 0
     for i in range(d):
         tmp = x[i]
-        print(tmp)
         out += tmp*z[i]
     return out
 
@@ -179,7 +178,6 @@ def part_grad(z, slave_num):
     return out
 
 
-
 def Slave(name, num):
     global A
     global d
@@ -204,11 +202,12 @@ def Slave(name, num):
     while 1:
         yk = xm
         for i in range(p):
-            xk1 = yk - gamma() * part_grad(yk, num)
+            grad = gamma() * part_grad(yk, num)
+            xk1 = yk - grad
             yk1 = xk1 + k/(k+3)*(xk1-xk)
-        delta = yk1-yk
-        k += 1
-        xk1 = xk
+            k += 1
+        delta = yk1 - yk
+        xk = xk1
         check = 0
         while 1:
             lock1.acquire()
@@ -291,9 +290,8 @@ def master():
             lock2.release()
             if check == 0:
                 break
-        if(k % 100 == 0):
-            print(x2)
         k = k + 1
+        print(x2)
         if (1 != conv):
             t_to_write = str(time.time() - start_time)
             g.write(t_to_write)
@@ -305,19 +303,19 @@ def master():
 
         if is_conv(x1, x2) == 1:
             finish_time = time.time()
-            print("It takes", finish_time-start_time)
+            # print("It takes", finish_time-start_time)
             conv = 1
-            print("lol")
+            # print("lol")
             g.close()
             h.close()
-            print("kek")
+            # print("kek")
             break
 
         x1 = x2
     for i in range(cores):
-        print('join')
+        # print('join')
         my_threads[i].join()
-        print('lols')
+        # print('lols')
     out = finish_time-start_time
     set_it_back()
     return out
@@ -335,4 +333,9 @@ if __name__ == "__main__":
     L = max(abs(np.linalg.eig(np.matrix(ATA))[0]))
     # print(L)
     ATb = A.T@b
-    master()
+    print("1 ", master())
+    print("2 ", master())
+    print("3 ", master())
+    print("4 ", master())
+    print("5 ", master())
+    print("6 ", master())
