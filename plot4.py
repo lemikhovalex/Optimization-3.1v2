@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 import numpy as np
 import math
 import threading
@@ -7,27 +7,12 @@ import random
 start_time = time.time()
 sleep_time = 0
 d = 2
-=======
-import time
-import numpy as np
-import scipy.optimize as opt
-import math
-import threading
-import time
-start_time = time.time()
-sleep_time = 0
-n = 581
-d = 12
-n_to_read = 581012
-d_to_read = 100
->>>>>>> 95dfeb8a6dd907907d22f99ef963e23c288e5526
 data_upd1 = 0
 data_upd2 = 0
 lock1 = threading.Lock()  # общение с мастером
 lock2 = threading.Lock()
 data1 = 0
 data2 = 0
-<<<<<<< HEAD
 gldelta = np.zeros((d, 1))
 glxm = np.zeros((d, 1))
 testcounter = 0
@@ -36,16 +21,6 @@ epsilon_conv = 0.7
 L = 0
 p = 1
 cores = 1  #для вычислений, один на главный
-=======
-gldelta=np.zeros((d, 1))
-glxm=np.zeros((d, 1))
-testcounter = 0
-conv = 0
-epsilon_conv = 10**-1
-L = 0
-p = 7
-cores = 2 #для вычислений, один на главный
->>>>>>> 95dfeb8a6dd907907d22f99ef963e23c288e5526
 x_init = np.zeros((d, 1))
 for i in range(d):
     x_init[i][0] = 1
@@ -53,7 +28,6 @@ for i in range(d):
 sub_opt_arr = []
 time_arr = []
 
-<<<<<<< HEAD
 def set_it_back():
     global start_time
     global sleep_time
@@ -136,11 +110,6 @@ def read_star():
         out[i][0] = float(s)
     f.close()
     return out
-=======
-
-
-
->>>>>>> 95dfeb8a6dd907907d22f99ef963e23c288e5526
 
 
 def scal_mul(x, z):
@@ -148,10 +117,6 @@ def scal_mul(x, z):
     out = 0
     for i in range(d):
         tmp = x[i]
-<<<<<<< HEAD
-=======
-        print(tmp)
->>>>>>> 95dfeb8a6dd907907d22f99ef963e23c288e5526
         out += tmp*z[i]
     return out
 
@@ -186,31 +151,16 @@ def is_conv(x_curr, x_prev):
         return False
 
 
-<<<<<<< HEAD
 def st_string(slave_num):
     return slave_num*int(d/cores)
 
 
 def fi_string(slave_num):
     if slave_num != cores-1:
-=======
-
-
-
-def st_string(slave_num):
-    return slave_num*int(d/cores)
-
-def fi_string(slave_num):
-    if slave_num!=cores:
->>>>>>> 95dfeb8a6dd907907d22f99ef963e23c288e5526
         return (slave_num + 1)*int(d/cores)-1
     return d-1
 
 
-<<<<<<< HEAD
-=======
-
->>>>>>> 95dfeb8a6dd907907d22f99ef963e23c288e5526
 def Slave(name, num):
     global A
     global d
@@ -230,7 +180,6 @@ def Slave(name, num):
     global sleep_time
 
     while 1:
-<<<<<<< HEAD
         print(1)
         x0 = xm
         for i in range(p):
@@ -240,18 +189,6 @@ def Slave(name, num):
                     tmp[e] += B[e][j]*xm[j]
                 tmp[e] -= ATB[e]
             delta = gamma() * tmp
-=======
-        x0 = xm
-        delta = np.zeros((d, 1))
-
-        for i in range(p):
-            tmp = np.zeros((d, 1))
-            for e in range(st_string(num),fi_string(num)+1):
-                for j in range(d):
-                    tmp[e] += B[e][j]*xm[j]
-                tmp[e]-= ATB[e]
-            delta=gamma()* tmp
->>>>>>> 95dfeb8a6dd907907d22f99ef963e23c288e5526
             xm = xm - delta
         delta = xm - x0
         check = 0
@@ -275,13 +212,8 @@ def Slave(name, num):
             if check == 0 or conv == 1:
                 break
         if conv == 1:
-<<<<<<< HEAD
             print("finished")
             return 0
-=======
-            break
-
->>>>>>> 95dfeb8a6dd907907d22f99ef963e23c288e5526
 
 
 def master():
@@ -317,10 +249,7 @@ def master():
 
     start_time = time.time()
     while 1:
-<<<<<<< HEAD
         print(4)
-=======
->>>>>>> 95dfeb8a6dd907907d22f99ef963e23c288e5526
         check = 0
         while 1:
             lock1.acquire()
@@ -329,15 +258,10 @@ def master():
                 delta = gldelta
                 data_upd1 = 0
                 check = 1
-<<<<<<< HEAD
                 print("check=", check)
             lock1.release()
             if check == 1:
                 #print("hui")
-=======
-            lock1.release()
-            if check == 1:
->>>>>>> 95dfeb8a6dd907907d22f99ef963e23c288e5526
                 x2 = x2 + delta
                 break
 
@@ -352,11 +276,7 @@ def master():
             lock2.release()
             if check == 0:
                 break
-<<<<<<< HEAD
         print(2)
-=======
-        print(x2)
->>>>>>> 95dfeb8a6dd907907d22f99ef963e23c288e5526
         k = k + 1
         if (1 != conv):
             t_to_write = str(time.time() - start_time)
@@ -367,7 +287,6 @@ def master():
             h.write(subopt_to_write)
             h.write("\n")
 
-<<<<<<< HEAD
         print(local_norm_2(x2 - x_star))
         if is_conv(x1, x2) == 1:
             finish_time = time.time()
@@ -415,33 +334,3 @@ if __name__ == "__main__":
     print("8", master())
     print("9", master())
     print("10", master())
-=======
-        if is_conv(x1, x2) == 1:
-            finish_time = time.time()
-            print("It takes", finish_time-start_time)
-            conv = 1
-            print("lol")
-            g.close()
-            h.close()
-            print("kek")
-            break
-
-        x1 = x2
-    for i in range(cores):
-        print('join')
-        my_threads[i].join()
-        print('lols')
-
-
-if __name__ == "__main__":
-    A = np.ones((d, d))
-    A[4][5] = 100
-    B = A
-    B = A.T@B
-    x_star = np.full((d, 1), 2)
-    b = A@x_star
-    L = max(abs(np.linalg.eig(np.matrix(B))[0]))
-    print(L)
-    ATB = A.T@b
-    master()
->>>>>>> 95dfeb8a6dd907907d22f99ef963e23c288e5526
