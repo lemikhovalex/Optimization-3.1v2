@@ -20,7 +20,7 @@ gldelta = np.zeros((d, 1))
 glxm = np.zeros((d, 1))
 testcounter = 0
 conv = 0
-epsilon_conv = 0.5 * 10 ** -5
+epsilon_conv = 0.4
 L = 0
 p = 1
 cores = 1
@@ -113,6 +113,7 @@ def read_star():
     f.close()
     return out
 
+
 def scal_mul(x, z):
     global d
     out = 0
@@ -147,6 +148,7 @@ def gamma():
 def is_conv(x_curr, x_prev):
     global x_star
     delta = local_norm_2(x_curr - x_star)
+    # print("     ", delta)
     if delta < epsilon_conv:
         return True
     else:
@@ -201,7 +203,7 @@ def Slave(name, num):
             if data_upd1 == 0:
                 if data1 == cores:
                     data1 = 0
-                time.sleep(sleep_time)
+                time.sleep( 1* random.randint(4,8)/40.0 )
                 data1 += 1
                 if data1 == 1:
                     gldelta = 0
@@ -292,6 +294,7 @@ def master():
             h.write(subopt_to_write)
             h.write("\n")
         if is_conv(x1, x2) == 1:
+            print("    ", k)
             finish_time = time.time()
             # print("It takes", finish_time-start_time)
             conv = 1
