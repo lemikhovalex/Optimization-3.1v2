@@ -20,7 +20,7 @@ gldelta=np.zeros((d+1, 1))
 glxm=np.zeros((d+1, 1))
 testcounter = 0
 conv = 0
-epsilon_conv = 0.5 * 10 ** -2
+epsilon_conv = 1 * 10 ** -4
 L = 21930585.25 * 10**-6
 p = 2
 lambda_1 = 10 ** -9 * 10**-2
@@ -148,7 +148,7 @@ def gamma():
 def is_conv(x_curr, x_prev):
     global x_star
     delta = local_norm_2(x_curr - x_star)
-    print(delta)
+    print("     ", delta)
     if delta < epsilon_conv:
         return True
     else:
@@ -357,10 +357,8 @@ def master():
             finish_time = time.time()
             print("It takes", finish_time-start_time)
             conv = 1
-            print("lol")
             g.close()
             h.close()
-            print("kek")
             break
 
         x1 = x2
@@ -372,19 +370,18 @@ def master():
     return out
 
 if __name__ == "__main__":
-    A = reading_dataset()
+    A = reading_dataset("covtype.libsvm.binary.scale")
     x_star = read_star()
     # print(x_star)
-    ATA = A.T@A
-    V = open('someshit.txt', 'w')
-    for i in range(1, 7):
-        for j in range(1, 10):
+    V = open('plots1_with_delays.txt', 'w')
+    for i in range(1, 6):
+        for j in range(1, 6):
             print("cores =", i)
             print("p = ", j)
             cores = i
             p = j
             l_arr = []
-            for l in range(5):
+            for l in range(2):
                 l_arr.append(master())
             V.write(str( (max(l_arr)-min(l_arr))/(statistics.mean(l_arr)) ) + str("_") )
             V.write(str(statistics.mean(l_arr)) + str(" "))
