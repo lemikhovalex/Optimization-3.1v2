@@ -374,8 +374,8 @@ if __name__ == "__main__":
     x_star = read_star()
     # print(x_star)
     V = open('plots1_with_delays.txt', 'w')
-    for i in range(1, 6):
-        for j in range(1, 6):
+    for i in range(1, 9):
+        for j in range(1, 5):
             print("cores =", i)
             print("p = ", j)
             cores = i
