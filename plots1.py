@@ -261,7 +261,7 @@ def Slave(name, num):
         check = 0
         while 1:
             lock1.acquire()
-            time.sleep(0* random.randint(4, 8)/40.0)
+            time.sleep(1* random.randint(4, 8)/40.0)
             if data_upd1 == 0:
                 data1 = name
                 gldelta = delta
