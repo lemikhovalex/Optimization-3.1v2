@@ -164,6 +164,16 @@ def fi_string(slave_num):
         return (slave_num + 1)*int(d/cores)-1
     return d-1
 
+def part_grad(z, slave_num):
+    global ATA
+    global ATb
+    out = np.zeros((d, 1))
+    for e in range(st_string(slave_num), fi_string(slave_num) + 1):
+        for j in range(d):
+            out[e] += ATA[e][j] * z[j]
+        out[e] -= ATb[e]
+    return out
+
 
 def Slave(name, num):
     global A
@@ -182,54 +192,42 @@ def Slave(name, num):
     global gldelta
     global glxm
     global sleep_time
-    global ATb
-    global ATA
+    xk = x_init
+    k = 1.0
+    xk1 = 0
 
     while 1:
-        x0 = xm
+        yk = xm
         for i in range(p):
-            tmp = np.zeros((d, 1))
-            for e in range(st_string(num), fi_string(num)+1):
-                for j in range(d):
-                    tmp[e] += ATA[e][j]*xm[j]
-                tmp[e] -= ATb[e]
-            delta = gamma() * tmp
-            xm = xm - delta
-        delta = xm - x0
-        check = 0
+            grad = gamma() * part_grad(yk, num)
+            xk1 = yk - grad
+            yk1 = xk1 + k/(k+3)*(xk1-xk)
+            k += 1
+        delta = yk1 - yk
+        xk = xk1
         check = 0
         while 1:
             lock1.acquire()
             if data_upd1 == 0:
-                if data1 == cores:
-                    data1 = 0
-                time.sleep( 1* random.randint(4,8)/40.0 )
-                data1 += 1
-                if data1 == 1:
-                    gldelta = 0
-                gldelta += delta
-
+                data1 = name
+                gldelta = delta
+                data_upd1 = 1
                 check = 1
-                if data1 == cores:
-                    data_upd1 = 1
             lock1.release()
             if check == 1 or conv == 1:
                 break
         while 1:
             lock2.acquire()
-            if data_upd2 == 1:
-                if data2 == cores:
-                    data2 = 0
+            if data_upd2 == 1 and name == data2:
                 xm = glxm
-                data2 += 1
+                data_upd2 = 0
                 check = 0
-                if data2 == cores:
-                    data_upd2 = 0
             lock2.release()
             if check == 0 or conv == 1:
                 break
         if conv == 1:
             break
+            
 
 def master():
     my_threads = []
