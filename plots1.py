@@ -3,6 +3,8 @@ import numpy as np
 import scipy.optimize as opt
 import math
 import threading
+import random
+import statistics
 start_time = time.time()
 n = 581
 d = 54
@@ -18,7 +20,7 @@ gldelta=np.zeros((d+1, 1))
 glxm=np.zeros((d+1, 1))
 testcounter = 0
 conv = 0
-epsilon_conv = 10 ** -3
+epsilon_conv = 0.5 * 10 ** -2
 L = 21930585.25 * 10**-6
 p = 2
 lambda_1 = 10 ** -9 * 10**-2
@@ -30,6 +32,33 @@ x_init[0][0] = 0
 
 sub_opt_arr = []
 time_arr = []
+
+
+def set_it_back():
+    global start_time
+    global sleep_time
+    global d
+    global data_upd1
+    global data_upd2
+    global lock1
+    global lock2
+    global data1
+    global data2
+    global gldelta
+    global glxm
+    global conv
+    start_time = time.time()
+    sleep_time = 0
+    data_upd1 = 0
+    data_upd2 = 0
+    lock1 = threading.Lock()
+    lock2 = threading.Lock()
+    data1 = 0
+    data2 = 0
+    gldelta = np.zeros((d, 1))
+    glxm = np.zeros((d, 1))
+    conv = 0
+    testcounter = 0
 
 
 def write_star(x):
@@ -119,6 +148,7 @@ def gamma():
 def is_conv(x_curr, x_prev):
     global x_star
     delta = local_norm_2(x_curr - x_star)
+    print(delta)
     if delta < epsilon_conv:
         return True
     else:
@@ -231,6 +261,7 @@ def Slave(name, num):
         check = 0
         while 1:
             lock1.acquire()
+            time.sleep(0* random.randint(4, 8)/40.0)
             if data_upd1 == 0:
                 data1 = name
                 gldelta = delta
@@ -242,6 +273,7 @@ def Slave(name, num):
         while 1:
             lock2.acquire()
             if data_upd2 == 1 and name == data2:
+
                 xm = glxm
                 data_upd2 = 0
                 check = 0
@@ -333,11 +365,28 @@ def master():
 
         x1 = x2
     for i in range(cores):
-        print('join')
         my_threads[i].join()
-        print('lols')
 
+    out = finish_time - start_time
+    set_it_back()
+    return out
 
 if __name__ == "__main__":
-    A = reading_dataset("covtype.libsvm.binary.scale")
-    master()
+    A = reading_dataset()
+    x_star = read_star()
+    # print(x_star)
+    ATA = A.T@A
+    V = open('someshit.txt', 'w')
+    for i in range(1, 7):
+        for j in range(1, 10):
+            print("cores =", i)
+            print("p = ", j)
+            cores = i
+            p = j
+            l_arr = []
+            for l in range(5):
+                l_arr.append(master())
+            V.write(str( (max(l_arr)-min(l_arr))/(statistics.mean(l_arr)) ) + str("_") )
+            V.write(str(statistics.mean(l_arr)) + str(" "))
+        V.write("\n")
+    V.close()
