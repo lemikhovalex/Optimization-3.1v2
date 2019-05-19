@@ -318,7 +318,7 @@ if __name__ == "__main__":
     # print(L)
     ATb = A.T@b
     string_to_write = ""
-    V = open('plots9.txt', 'w')
+    V = open('plots11.txt', 'w')
     for i in range(4, 8):
         for j in range(5, 10):
             print("cores =", i)
