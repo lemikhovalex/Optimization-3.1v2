@@ -4,6 +4,8 @@ import scipy.optimize as opt
 import math
 import threading
 import time
+import random
+import statistics
 start_time = time.time()
 sleep_time = 1
 n = 581
@@ -20,7 +22,7 @@ gldelta=np.zeros((d+1, 1))
 glxm=np.zeros((d+1, 1))
 testcounter = 0
 conv = 0
-epsilon_conv = 10 ** -3
+epsilon_conv = 0.3 * 10 ** -4
 L = 21930585.25 * 10**-6
 p = 2
 lambda_1 = 10 ** -9 * 10**-2
@@ -234,6 +236,7 @@ def Slave(name, num):
         check = 0
         while 1:
             lock1.acquire()
+            time.sleep(1 * random.randint(4, 8)/40.0)
             if data_upd1 == 0:
                 if data1==cores:
                     data1=0
@@ -355,4 +358,19 @@ def master():
 
 if __name__ == "__main__":
     A = reading_dataset("covtype.libsvm.binary.scale")
-    master()
+    x_star = read_star()
+    # print(x_star)
+    V = open('plots3_with_delays.txt', 'w')
+    for i in range(1, 9):
+        for j in range(1, 5):
+            print("cores =", i)
+            print("p = ", j)
+            cores = i
+            p = j
+            l_arr = []
+            for l in range(2):
+                l_arr.append(master())
+            V.write(str((max(l_arr) - min(l_arr)) / (statistics.mean(l_arr))) + str("_"))
+            V.write(str(statistics.mean(l_arr)) + str(" "))
+        V.write("\n")
+    V.close()

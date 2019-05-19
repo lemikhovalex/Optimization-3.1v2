@@ -20,7 +20,7 @@ gldelta=np.zeros((d+1, 1))
 glxm=np.zeros((d+1, 1))
 testcounter = 0
 conv = 0
-epsilon_conv = 1 * 10 ** -4
+epsilon_conv = 0.3 * 10 ** -4
 L = 21930585.25 * 10**-6
 p = 2
 lambda_1 = 10 ** -9 * 10**-2
@@ -148,7 +148,6 @@ def gamma():
 def is_conv(x_curr, x_prev):
     global x_star
     delta = local_norm_2(x_curr - x_star)
-    print("     ", delta)
     if delta < epsilon_conv:
         return True
     else:
@@ -261,7 +260,7 @@ def Slave(name, num):
         check = 0
         while 1:
             lock1.acquire()
-            time.sleep(1* random.randint(4, 8)/40.0)
+            time.sleep(1 * random.randint(4, 8)/40.0)
             if data_upd1 == 0:
                 data1 = name
                 gldelta = delta
@@ -354,6 +353,7 @@ def master():
             h.write("\n")
 
         if is_conv(x1, x2) == 1:
+            print("    ", k)
             finish_time = time.time()
             print("It takes", finish_time-start_time)
             conv = 1
@@ -374,8 +374,8 @@ if __name__ == "__main__":
     x_star = read_star()
     # print(x_star)
     V = open('plots1_with_delays.txt', 'w')
-    for i in range(1, 6):
-        for j in range(1, 6):
+    for i in range(1, 9):
+        for j in range(1, 5):
             print("cores =", i)
             print("p = ", j)
             cores = i

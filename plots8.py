@@ -7,7 +7,7 @@ import time
 import statistics
 start_time = time.time()
 sleep_time = 0
-d = 12
+d = 50
 n_to_read = 581012
 d_to_read = 100
 data_upd1 = 0
@@ -20,7 +20,7 @@ gldelta = np.zeros((d, 1))
 glxm = np.zeros((d, 1))
 testcounter = 0
 conv = 0
-epsilon_conv = 0.08
+epsilon_conv = 0.5 * 10 ** -5
 L = 0
 p = 1
 cores = 1
@@ -305,7 +305,6 @@ def master():
         my_threads[i].join()
     out = finish_time - start_time
     set_it_back()
-    print("lolll")
     return out
 
 
@@ -322,15 +321,15 @@ if __name__ == "__main__":
     # print(L)
     ATb = A.T@b
     string_to_write = ""
-    V = open('someshit.txt', 'w')
-    for i in range(1, 7):
-        for j in range(1, 10):
+    V = open('plots8_but_precizely.txt', 'w')
+    for i in range(4, 8):
+        for j in range(5, 10):
             print("cores =", i)
             print("p = ", j)
             cores = i
             p = j
             l_arr = []
-            for l in range(5):
+            for l in range(3):
                 l_arr.append(master())
             V.write(str( (max(l_arr)-min(l_arr))/(statistics.mean(l_arr)) ) + str("_") )
             V.write(str(statistics.mean(l_arr)) + str(" "))
