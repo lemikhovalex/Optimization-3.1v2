@@ -1,10 +1,10 @@
 import time
 import numpy as np
 import random
-import scipy.optimize as opt
 import math
 import threading
 import time
+import statistics
 start_time = time.time()
 sleep_time = 0
 d = 12
@@ -20,7 +20,7 @@ gldelta = np.zeros((d, 1))
 glxm = np.zeros((d, 1))
 testcounter = 0
 conv = 0
-epsilon_conv = 0.1
+epsilon_conv = 0.08
 L = 0
 p = 1
 cores = 1
@@ -291,24 +291,21 @@ def master():
             subopt_to_write = str(local_norm_2(x2 - x_star))
             h.write(subopt_to_write)
             h.write("\n")
-        print(x2)
         if is_conv(x1, x2) == 1:
             finish_time = time.time()
             # print("It takes", finish_time-start_time)
             conv = 1
-            # print("lol")
             g.close()
             h.close()
-            # print("kek")
             break
 
         x1 = x2
     for i in range(cores):
         # print('join')
         my_threads[i].join()
-        # print('lols')
     out = finish_time - start_time
     set_it_back()
+    print("lolll")
     return out
 
 
@@ -324,9 +321,18 @@ if __name__ == "__main__":
     L = max(abs(np.linalg.eig(np.matrix(ATA))[0]))
     # print(L)
     ATb = A.T@b
-    print("1 ", master())
-    print("2 ", master())
-    print("3 ", master())
-    print("4 ", master())
-    print("5 ", master())
-    print("6 ", master())
+    string_to_write = ""
+    V = open('someshit.txt', 'w')
+    for i in range(1, 7):
+        for j in range(1, 10):
+            print("cores =", i)
+            print("p = ", j)
+            cores = i
+            p = j
+            l_arr = []
+            for l in range(5):
+                l_arr.append(master())
+            V.write(str( (max(l_arr)-min(l_arr))/(statistics.mean(l_arr)) ) + str("_") )
+            V.write(str(statistics.mean(l_arr)) + str(" "))
+        V.write("\n")
+    V.close()
