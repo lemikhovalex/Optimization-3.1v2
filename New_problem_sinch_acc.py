@@ -341,7 +341,7 @@ if __name__ == "__main__":
     # print(L)
     ATb = A.T @ b
     string_to_write = ""
-    V = open('plots9.txt', 'w')
+    V = open('nest_sync.txt', 'w')
     for i in range(1, 7):
         for j in range(1, 12):
             print("\n")
@@ -350,7 +350,7 @@ if __name__ == "__main__":
             cores = i
             p = j
             l_arr = []
-            for l in range(5):
+            for l in range(1):
                 l_arr.append(master())
             V.write(str((max(l_arr) - min(l_arr)) / (statistics.mean(l_arr))) + str("_"))
             V.write(str(statistics.mean(l_arr)) + str(" "))
