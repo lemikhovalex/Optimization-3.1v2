@@ -21,7 +21,7 @@ gldelta = np.zeros((d, 1))
 glxm = np.zeros((d, 1))
 testcounter = 0
 conv = 0
-epsilon_conv = 0.4
+epsilon_conv = 0.67
 L = 0
 p = 1
 cores = 1
@@ -200,20 +200,25 @@ def Slave(name, num):
 
     while 1:
         yk = xm
+        delta = 0
         for i in range(p):
             grad = gamma() * part_grad(yk, num)
             xk1 = yk - grad
-            yk1 = xk1 + k / (k + 3) * (xk1 - xk)
-            k += 1
-        delta = yk1 - yk
-        xk = xk1
+            yk1 = xk1 + k / (k + 3)/cores * (xk1 - xk)
+
+            delta += yk1 - yk
+
+            yk = yk1
+            xk = xk1
+        k += 1
         check = 0
         while 1:
             lock1.acquire()
+
             if data_upd1 == 0:
+                time.sleep(1 * random.randint(4, 8) / 40.0)
                 if data1 == cores:
                     data1 = 0
-                time.sleep(sleep_time)
                 data1 += 1
                 if data1 == 1:
                     gldelta = 0
@@ -305,9 +310,9 @@ def master():
             h.write(subopt_to_write)
             h.write("\n")
         if is_conv(x1, x2) == 1:
-            print("    ", k)
             finish_time = time.time()
-            # print("It takes", finish_time-start_time)
+            print("  T=", finish_time-start_time)
+            print("   k=", k)
             conv = 1
             g.close()
             h.close()
@@ -323,6 +328,7 @@ def master():
 
 
 if __name__ == "__main__":
+    print("eto sinh")
     # write_star()
     # write_matrix()
     A = read_matrix()
@@ -336,14 +342,15 @@ if __name__ == "__main__":
     ATb = A.T @ b
     string_to_write = ""
     V = open('plots9.txt', 'w')
-    for i in range(4, 8):
-        for j in range(5, 10):
+    for i in range(1, 7):
+        for j in range(1, 12):
+            print("\n")
             print("cores =", i)
             print("p = ", j)
             cores = i
             p = j
             l_arr = []
-            for l in range(3):
+            for l in range(5):
                 l_arr.append(master())
             V.write(str((max(l_arr) - min(l_arr)) / (statistics.mean(l_arr))) + str("_"))
             V.write(str(statistics.mean(l_arr)) + str(" "))
