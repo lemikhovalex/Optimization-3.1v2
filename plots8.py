@@ -21,7 +21,7 @@ gldelta = np.zeros((d, 1))
 glxm = np.zeros((d, 1))
 testcounter = 0
 conv = 0
-epsilon_conv = 0.4
+epsilon_conv = 0.67
 L = 0
 p = 1
 cores = 1
@@ -205,10 +205,12 @@ def Slave(name, num):
             grad = gamma() * part_grad(yk, num)
             xk1 = yk - grad
             yk1 = xk1 + k / (k + 3)/cores * (xk1 - xk)
-            k += 1
+
             delta += yk1 - yk
+
             yk = yk1
-        xk = xk1
+            xk = xk1
+        k += 1
         check = 0
         while 1:
             lock1.acquire()
@@ -331,14 +333,14 @@ if __name__ == "__main__":
     ATb = A.T @ b
     string_to_write = ""
     V = open('plots8_but_precizely.txt', 'w')
-    for i in range(2, 8):
-        for j in range(1, 2):
+    for i in range(1, 7):
+        for j in range(2, 3):
             print("cores =", i)
             print("p = ", j)
             cores = i
             p = j
             l_arr = []
-            for l in range(1):
+            for l in range(4):
                 l_arr.append(master())
             V.write(str((max(l_arr) - min(l_arr)) / (statistics.mean(l_arr))) + str("_"))
             V.write(str(statistics.mean(l_arr)) + str(" "))
