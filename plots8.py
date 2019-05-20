@@ -5,6 +5,7 @@ import math
 import threading
 import time
 import statistics
+
 start_time = time.time()
 sleep_time = 0
 d = 50
@@ -120,7 +121,7 @@ def scal_mul(x, z):
     for i in range(d):
         tmp = x[i]
         print(tmp)
-        out += tmp*z[i]
+        out += tmp * z[i]
     return out
 
 
@@ -128,7 +129,7 @@ def local_norm_2(x):
     global d
     out = 0
     for i in range(d):
-        out += x[i][0]**2
+        out += x[i][0] ** 2
     return math.sqrt(out)
 
 
@@ -142,7 +143,7 @@ def local_norm_1(x):
 
 def gamma():
     global L
-    return 1.0/L
+    return 1.0 / L
 
 
 def is_conv(x_curr, x_prev):
@@ -156,13 +157,14 @@ def is_conv(x_curr, x_prev):
 
 
 def st_string(slave_num):
-    return slave_num*int(d/cores)
+    return slave_num * int(d / cores)
 
 
 def fi_string(slave_num):
-    if slave_num != cores-1:
-        return (slave_num + 1)*int(d/cores)-1
-    return d-1
+    if slave_num != cores - 1:
+        return (slave_num + 1) * int(d / cores) - 1
+    return d - 1
+
 
 def part_grad(z, slave_num):
     global ATA
@@ -198,12 +200,14 @@ def Slave(name, num):
 
     while 1:
         yk = xm
+        delta = 0
         for i in range(p):
             grad = gamma() * part_grad(yk, num)
             xk1 = yk - grad
-            yk1 = xk1 + k/(k+3)*(xk1-xk)
+            yk1 = xk1 + k / (k + 3)/cores * (xk1 - xk)
             k += 1
-        delta = yk1 - yk
+            delta += yk1 - yk
+            yk = yk1
         xk = xk1
         check = 0
         while 1:
@@ -217,6 +221,7 @@ def Slave(name, num):
             if check == 1 or conv == 1:
                 break
         while 1:
+
             lock2.acquire()
             if data_upd2 == 1 and name == data2:
                 xm = glxm
@@ -227,7 +232,7 @@ def Slave(name, num):
                 break
         if conv == 1:
             break
-            
+
 
 def master():
     my_threads = []
@@ -266,8 +271,10 @@ def master():
             lock1.acquire()
             if data_upd1 == 1:
                 delta = gldelta
+                tmp = data1
                 data_upd1 = 0
                 check = 1
+
             lock1.release()
             if check == 1:
                 x2 = x2 + delta
@@ -275,6 +282,7 @@ def master():
         while 1:
             lock2.acquire()
             if data_upd2 == 0:
+                data2 = tmp
                 glxm = x2
                 data_upd2 = 1
                 check = 0
@@ -294,7 +302,7 @@ def master():
         if is_conv(x1, x2) == 1:
             print("    ", k)
             finish_time = time.time()
-            # print("It takes", finish_time-start_time)
+            print("It takes", finish_time-start_time)
             conv = 1
             g.close()
             h.close()
@@ -310,29 +318,29 @@ def master():
 
 
 if __name__ == "__main__":
-    #write_star()
-    #write_matrix()
+    # write_star()
+    # write_matrix()
     A = read_matrix()
     x_star = read_star()
     # print(x_star)
-    ATA = A.T@A
+    ATA = A.T @ A
     x_star = np.full((d, 1), 2)
-    b = A@x_star
+    b = A @ x_star
     L = max(abs(np.linalg.eig(np.matrix(ATA))[0]))
     # print(L)
-    ATb = A.T@b
+    ATb = A.T @ b
     string_to_write = ""
     V = open('plots8_but_precizely.txt', 'w')
-    for i in range(4, 8):
-        for j in range(5, 10):
+    for i in range(2, 8):
+        for j in range(1, 2):
             print("cores =", i)
             print("p = ", j)
             cores = i
             p = j
             l_arr = []
-            for l in range(3):
+            for l in range(1):
                 l_arr.append(master())
-            V.write(str( (max(l_arr)-min(l_arr))/(statistics.mean(l_arr)) ) + str("_") )
+            V.write(str((max(l_arr) - min(l_arr)) / (statistics.mean(l_arr))) + str("_"))
             V.write(str(statistics.mean(l_arr)) + str(" "))
         V.write("\n")
     V.close()
