@@ -294,9 +294,9 @@ def master():
             h.write(subopt_to_write)
             h.write("\n")
         if is_conv(x1, x2) == 1:
-            print("    ", k)
             finish_time = time.time()
-            print("It takes", finish_time-start_time)
+            print("  T=", finish_time-start_time)
+            print("   k=", k)
             conv = 1
             g.close()
             h.close()
@@ -325,8 +325,9 @@ if __name__ == "__main__":
     ATb = A.T@b
     string_to_write = ""
     V = open('plots10.txt', 'w')
-    for i in range(1, 4):
-        for j in range(1, 12):
+    for i in range(1, 7):
+        for j in range(1, 25):
+            print("\n")
             print("cores =", i)
             print("p = ", j)
             cores = i
