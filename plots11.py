@@ -20,7 +20,7 @@ gldelta = np.zeros((d, 1))
 glxm = np.zeros((d, 1))
 testcounter = 0
 conv = 0
-epsilon_conv = 0.4
+epsilon_conv = 0.67
 L = 0
 p = 1
 cores = 1
@@ -148,7 +148,7 @@ def gamma():
 def is_conv(x_curr, x_prev):
     global x_star
     delta = local_norm_2(x_curr - x_star)
-    print("     ", delta)
+    # print("     ", delta)
     if delta < epsilon_conv:
         return True
     else:
@@ -290,7 +290,7 @@ def master():
         if is_conv(x1, x2) == 1:
             print("    ", k)
             finish_time = time.time()
-            # print("It takes", finish_time-start_time)
+            print("It takes", finish_time-start_time)
             conv = 1
             g.close()
             h.close()
@@ -319,8 +319,8 @@ if __name__ == "__main__":
     ATb = A.T@b
     string_to_write = ""
     V = open('plots11.txt', 'w')
-    for i in range(4, 8):
-        for j in range(5, 10):
+    for i in range(1, 4):
+        for j in range(1, 12):
             print("cores =", i)
             print("p = ", j)
             cores = i
