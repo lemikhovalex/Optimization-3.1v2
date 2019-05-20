@@ -215,6 +215,7 @@ def Slave(name, num):
         while 1:
             lock1.acquire()
             if data_upd1 == 0:
+                time.sleep(1 * random.randint(4, 8)/40.0)
                 data1 = name
                 gldelta = delta
                 data_upd1 = 1
@@ -302,9 +303,9 @@ def master():
             h.write(subopt_to_write)
             h.write("\n")
         if is_conv(x1, x2) == 1:
-            print("    ", k)
             finish_time = time.time()
-            print("It takes", finish_time-start_time)
+            print("  T=", finish_time-start_time)
+            print("   k=", k)
             conv = 1
             g.close()
             h.close()
@@ -320,6 +321,7 @@ def master():
 
 
 if __name__ == "__main__":
+    print("eto sinh")
     # write_star()
     # write_matrix()
     A = read_matrix()
@@ -334,13 +336,14 @@ if __name__ == "__main__":
     string_to_write = ""
     V = open('plots8_but_precizely.txt', 'w')
     for i in range(1, 7):
-        for j in range(2, 3):
+        for j in range(1, 12):
+            print("\n")
             print("cores =", i)
             print("p = ", j)
             cores = i
             p = j
             l_arr = []
-            for l in range(4):
+            for l in range(5):
                 l_arr.append(master())
             V.write(str((max(l_arr) - min(l_arr)) / (statistics.mean(l_arr))) + str("_"))
             V.write(str(statistics.mean(l_arr)) + str(" "))
