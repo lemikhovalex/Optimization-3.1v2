@@ -22,7 +22,7 @@ gldelta=np.zeros((d+1, 1))
 glxm=np.zeros((d+1, 1))
 testcounter = 0
 conv = 0
-epsilon_conv = 0.3 * 10 ** -4
+epsilon_conv =  0.3 * 10 ** -4
 L = 21930585.25 * 10**-6
 p = 2
 lambda_1 = 10 ** -9 * 10**-2
@@ -34,6 +34,33 @@ x_init[0][0] = 0
 
 sub_opt_arr = []
 time_arr = []
+
+
+def set_it_back():
+    global start_time
+    global sleep_time
+    global d
+    global data_upd1
+    global data_upd2
+    global lock1
+    global lock2
+    global data1
+    global data2
+    global gldelta
+    global glxm
+    global conv
+    start_time = time.time()
+    sleep_time = 0
+    data_upd1 = 0
+    data_upd2 = 0
+    lock1 = threading.Lock()
+    lock2 = threading.Lock()
+    data1 = 0
+    data2 = 0
+    gldelta = np.zeros((d, 1))
+    glxm = np.zeros((d, 1))
+    conv = 0
+    testcounter = 0
 
 
 def write_star(x):
@@ -349,6 +376,9 @@ def master():
         x1 = x2
     for i in range(cores):
         my_threads[i].join()
+    out = finish_time - start_time
+    set_it_back()
+    return out
 
 
 if __name__ == "__main__":
