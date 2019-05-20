@@ -321,7 +321,7 @@ def master():
 
 
 if __name__ == "__main__":
-    print("eto sinh")
+    print("eto assinh")
     # write_star()
     # write_matrix()
     A = read_matrix()
