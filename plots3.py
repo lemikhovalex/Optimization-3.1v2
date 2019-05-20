@@ -122,7 +122,9 @@ def gamma():
 
 def is_conv(x_curr, x_prev):
     global x_star
+    global epsilon_conv
     delta = local_norm_2(x_curr - x_star)
+    print("    ", delta)
     if delta < epsilon_conv:
         return True
     else:
@@ -260,8 +262,6 @@ def Slave(name, num):
                 xm = glxm
                 data2 += 1
                 check = 0
-                print(name)
-                print(data2)
                 if data2 == cores:
                     data_upd2 = 0
             lock2.release()
@@ -328,7 +328,6 @@ def master():
             lock2.release()
             if check == 0:
                 break
-        print('dgfdfgdfgdfg')
         k = k + 1
         if (1 != conv):
             t_to_write = str(time.time() - start_time)
@@ -343,17 +342,13 @@ def master():
             finish_time = time.time()
             print("It takes", finish_time-start_time)
             conv = 1
-            print("lol")
             g.close()
             h.close()
-            print("kek")
             break
 
         x1 = x2
     for i in range(cores):
-        print('join')
         my_threads[i].join()
-        print('lols')
 
 
 if __name__ == "__main__":
